@@ -1,5 +1,3 @@
-all: STA53_final_project.html
-
 STA523_final_project.html: STA523_final_project.Rmd players_data.rds
 	Rscript -e "rmarkdown::render('STA523_final_project.Rmd')"
   
@@ -17,5 +15,5 @@ data/player_names.rds: get_player_names.R
 
 
 clean:
-	rm -f hw5.html
+	rm -f STA523_final_project.html
 	rm -rf data/

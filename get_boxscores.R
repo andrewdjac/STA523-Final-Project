@@ -82,7 +82,7 @@ get_season <- function(year){
 }
 
 years <- 2015:2018
-player_history <- map_df(years, function(x){get_season(x)})
+boxscores <- map_df(years, function(x){get_season(x)})
 
-write_rds(player_history, path = "data//boxscores.rds")
+write_rds(boxscores, path = "data//boxscores.rds")
 
