@@ -4,15 +4,17 @@ library(rvest)
 data_dir <- "data/"
 dir.create(data_dir, showWarnings = FALSE)
 
-page <- read_html("http://goduke.statsgeek.com/basketball-m/players/all.php")
-player_names <- page %>%   
+safely_read <- safely(html_session, otherwise = NA, quiet = TRUE)
+
+page <- safely_read("http://goduke.statsgeek.com/basketball-m/players/all.php")
+player_names <- page[[1]] %>%
   html_nodes(".stattextline .stattextline") %>% 
   html_text() %>% 
   str_replace("[^A-Z]+", ". ")
 
 get_game_stats <- function(season, date, year){
-  print(season)
-  page <- read_html(season %>% str_replace("game", "boxscore"))
+  page <- safely_read(season %>% str_replace("game", "boxscore")) %>% 
+    .[[1]]
   df <- data_frame(
     year = year,
     date = date,
@@ -58,8 +60,7 @@ get_game_stats <- function(season, date, year){
            fouls = fouls %>% as.numeric(),
            blocks = blocks %>% as.numeric(),
            steals = steals %>% as.numeric()
-           ) %>% 
-    filter(player %in% player_names)
+           )
   return(df)
 }
 
@@ -80,8 +81,8 @@ get_season <- function(year){
   return(df)
 }
 
-years <- 2005:2018
+years <- 2015:2018
 player_history <- map_df(years, function(x){get_season(x)})
 
-write_rds(player_history, path="data//players.rds")
+write_rds(player_history, path = "data//boxscores.rds")
 

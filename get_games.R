@@ -39,7 +39,7 @@ get_games <- function(year){
   return(df)
 }
 
-years <- 2005:2018
+years <- 2015:2018
 game_history <- map_df(years, function(x){get_games(x)})
 
-write_rds(game_history, path="data//games.rds")
+write_rds(game_history, path = "data//games.rds")
