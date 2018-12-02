@@ -47,8 +47,10 @@ get_player_names = function(season){
     Hometown = str_remove_all(Hometown, "\\t|\\n|Hometown:\\s"))
   
   info$Name = str_remove_all(info$Name, "\\t|\\n") %>% substr(.,nchar(.)/2+1,nchar(.))
+  info$Number=str_remove_all(info$Number, "\\#") %>% as.numeric()
   return (info)
 }
+
 
 temp = get_player_names(2018)
 
