@@ -50,9 +50,6 @@ get_player_names = function(season){
   return (info)
 }
 
-temp = get_player_names(2018)
-
-dir.create("data/player_names/", showWarnings = FALSE, recursive = TRUE)
 seasons = c(1989:2018)
 
 player_names = data.frame()
