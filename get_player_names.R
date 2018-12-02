@@ -21,7 +21,7 @@ get_player_names = function(season){
   weight = page %>% html_nodes(".weight") %>% html_text() %>% .[2:leng]
   year = page %>% html_nodes(".year") %>% html_text() %>% .[1:index]
   home = page %>% html_nodes(".hometown") %>% html_text() %>% .[1:index]
-  seas = paste0(as.character(season-1),"-",as.character(season))
+  seas = paste0(as.character(season),"-",as.character(season+1))
   
   info = data.frame(
     Season = seas,
