@@ -1,5 +1,6 @@
 library(tidyverse)
 library(rvest)
+library(httr)
 
 data_dir <- "data/"
 dir.create(data_dir, showWarnings = FALSE)
@@ -13,8 +14,79 @@ player_names <- page[[1]] %>%
   str_replace("[^A-Z]+", ". ")
 
 get_game_stats <- function(season, date, year){
-  page <- safely_read(season %>% str_replace("game", "boxscore")) %>% 
-    .[[1]]
+  status <- GET(season %>% str_replace("game", "boxscore")) %>% 
+    status_code
+  if(status == 500 || status == 502){
+    return(NULL)
+  }
+  page <- read_html(season %>% str_replace("game", "boxscore"))
+  points = page %>% 
+    html_nodes(".dnp , td.pts") %>% 
+    html_text()
+  if("--" %in% points){
+    points <- points %>% 
+      .[which(. != "--")]
+  }else{
+    points <- points %>% 
+      .[-(which(. == "") - 1)] %>% 
+      .[which(. != "")]
+  }
+  rebounds = page %>% 
+    html_nodes(".dnp , td.reb") %>% 
+    html_text()
+  if("--" %in% rebounds){
+    rebounds <- rebounds %>% 
+      .[which(. != "--")]
+  }else{
+    rebounds <- rebounds %>% 
+    .[-(which(. == "") - 1)] %>% 
+    .[which(. != "")]
+  }
+  assists = page %>% 
+    html_nodes(".dnp , td.ast") %>% 
+    html_text()
+  if("--" %in% assists){
+    assists <- assists %>% 
+      .[which(. != "--")]
+  }else{
+    assists <- assists %>% 
+      .[-(which(. == "") - 1)] %>% 
+      .[which(. != "")]
+  }
+  fouls = page %>% 
+    html_nodes(".dnp , td.pf") %>% 
+    html_text()
+  if("--" %in% fouls){
+    fouls <- fouls %>% 
+      .[which(. != "--")]
+  }else{
+    fouls <- fouls %>% 
+      .[-(which(. == "") - 1)] %>% 
+      .[which(. != "")]
+  }
+  blocks = page %>% 
+    html_nodes(".dnp , td.blk") %>% 
+    html_text() 
+  if("--" %in% blocks){
+    blocks <- blocks %>% 
+      .[which(. != "--")]
+  }else{
+    blocks <- blocks %>% 
+      .[-(which(. == "") - 1)] %>% 
+      .[which(. != "")]
+  }
+  steals = page %>% 
+    html_nodes(".dnp , td.stl") %>% 
+    html_text()  
+  if("--" %in% steals){
+    steals <- steals %>% 
+      .[which(. != "--")]
+  }else{
+    steals <- steals %>% 
+      .[-(which(. == "") - 1)] %>% 
+      .[which(. != "")]
+  }
+  
   df <- data_frame(
     year = year,
     date = date,
@@ -22,36 +94,12 @@ get_game_stats <- function(season, date, year){
       html_nodes("#gamepackage-boxscore-module a span") %>% 
       html_text() %>% 
       .[c(TRUE, FALSE)],
-    points = page %>% 
-      html_nodes(".dnp , td.pts") %>% 
-      html_text() %>% 
-      .[-(which(. == "") - 1)] %>% 
-      .[which(. != "")],
-    rebounds = page %>% 
-      html_nodes(".dnp , td.reb") %>% 
-      html_text() %>% 
-      .[-(which(. == "") - 1)] %>% 
-      .[which(. != "")],
-    assists = page %>% 
-      html_nodes(".dnp , td.ast") %>% 
-      html_text() %>% 
-      .[-(which(. == "") - 1)] %>% 
-      .[which(. != "")],
-    fouls = page %>% 
-      html_nodes(".dnp , td.pf") %>% 
-      html_text() %>% 
-      .[-(which(. == "") - 1)] %>% 
-      .[which(. != "")],
-    blocks = page %>% 
-      html_nodes(".dnp , td.blk") %>% 
-      html_text() %>% 
-      .[-(which(. == "") - 1)] %>% 
-      .[which(. != "")],
-    steals = page %>% 
-      html_nodes(".dnp , td.stl") %>% 
-      html_text() %>% 
-      .[-(which(. == "") - 1)] %>% 
-      .[which(. != "")]  
+    points = points,
+    rebounds = rebounds,
+    assists = assists,
+    fouls = fouls,
+    blocks = blocks,
+    steals = steals
   ) %>% 
     filter(points != "Did not play") %>% 
     mutate(points = points %>% as.numeric(),
@@ -81,8 +129,13 @@ get_season <- function(year){
   return(df)
 }
 
-years <- 2015:2018
+years <- 2005:2018
 boxscores <- map_df(years, function(x){get_season(x)})
 
 write_rds(boxscores, path = "data//boxscores.rds")
 
+page <- read_html("http://www.espn.com/mens-college-basketball/boxscore?gameId=300730150")
+points <- page %>% html_nodes(".dnp , td.pts") %>% 
+  html_text() %>% 
+  .[-(which(. == "" || . == "--") - 1)] %>% 
+  .[which(. != "")]
