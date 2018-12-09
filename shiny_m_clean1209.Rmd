@@ -1,0 +1,171 @@
+---
+output: rmarkdown::html_document
+runtime: shiny
+---
+```{r setup, include=FALSE, echo= FALSE}
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(shiny)
+library(readr)
+library(plotly)
+library(DT)
+boxscores <- readRDS("data//boxscores.rds")
+game_history= readRDS(game_history, path = "data//games.rds")
+```
+
+Prepare the data for the app
+```{r echo=FALSE}
+Player <- sort(unique(boxscores$player))
+stats_text <- c("Rebounds", 
+                "Assists", 
+                "Fouls", 
+                "Blocks",
+                "Steals"
+)
+stats_var <- c("Reb", 
+               "Ast", 
+               "Fls", 
+               "Blks",
+               "Stl"
+)
+
+# a function to create a summary table
+game_summary=function(year,month_day)
+{
+  
+  input=paste0(year,month_day)
+  
+  game2= game_history %>% 
+    mutate(all_date=paste0(year,
+                           date ))
+  index = match(input,game2$all_date)
+  if(is.na(index))
+  {
+    print(input)
+    output="Error: could not find a game on the selected date!"
+  } else {
+    output = game2[index,] %>% select(-all_date)
+    output = output %>% as.data.frame() #%>% kable()
+  }
+ 
+  return(output)
+}
+t_summary=game_summary(2018,"Fri, Mar 9")
+
+
+```
+
+####
+```{r}
+shinyApp(
+  ui = fluidPage(
+    titlePanel("Duke Basketball"),
+    sidebarLayout(sidebarPanel(
+        fluidRow(
+          
+          checkboxInput("ifhist", "Game day summary", value = FALSE, width = NULL),
+          conditionalPanel(condition = "input.ifhist == true",
+                           h4("Select a Season:"),
+                           numericInput("year",label=h6("year"),value=2018,max=2018,min=2015),
+                           h4("Select a Game:"),
+                           selectInput("gameid", "Game:", 
+                                       game_history[which(game_history$year==2018),"date"], 
+                                       selected = game_history[which(game_history$year==2018),"date"],
+                                       multiple = FALSE)
+                          ),
+         
+          checkboxInput("ifhist2", "Players summary", value = FALSE, width = NULL),
+          conditionalPanel(condition = "input.ifhist2 == true",
+                           h4("Select a Player:"),
+                           selectInput("id1", "Player Name:", 
+                                       Player, selected = Player[1], multiple = TRUE),
+                           
+                           # Input: Selector for variable to plot against mpg
+                           selectInput("stat", "Stats:", 
+                                       stats_text),
+                           
+                           textAreaInput("text", "Info", 
+                                         value = "Explore and compare players' game statistics", rows = 2)
+                           ),
+          hr()),
+        fluidRow(actionButton("submit", "Get Summary!"))
+      ),  
+      mainPanel(
+        h1(paste0("Search Results"), align = "center"),
+        #tabPanel("summary_table", DT::dataTableOutput("mytable1")),
+        uiOutput("links"),
+        # Output: Plot of the requested variable against mpg
+        plotlyOutput("bball_plot", height = "auto", width = "auto")
+      ))
+  ),
+  server = function(input, output, session)
+  { # 
+    # this updates at every press of the submit button
+    observe({
+      x = input$year
+      updateSelectInput(session, "gameid",
+      
+      choices = game_history[which(game_history$year==x),"date"]
+      
+    )
+    })
+    
+    webtable = eventReactive(input$submit,{
+      
+      
+      if(input$ifhist){
+         t_summary=game_summary(input$year,input$gameid)
+   
+        summary_table =t_summary 
+       
+      } 
+      
+      webtable = summary_table
+   
+      return(webtable)
+    })
+    
+    op_date = eventReactive(input$submit,{
+      op_date = paste(input$year,input$gameid,sep=" " )
+      return(op_date)
+    })
+    
+    observeEvent(input$submit, {
+      output$links = renderUI(
+        fluidPage(
+          renderText({ paste("Game summary for", op_date(), sep=" " )}),
+          hr(),
+           output$mytable1 <- DT::renderDataTable({
+        
+        DT::datatable(webtable())
+      })
+      ))
+      
+    })
+    ###################
+    
+  
+  # Generate a plot of the requested variable 
+  output$bball_plot1 <- renderPlotly({
+    
+    index <- match(input$stat,stats_text)
+    
+    statistic <- boxscores %>% 
+      filter(id %in% input$id1) %>%
+      select(id, stats_var[index], player)
+    p <- ggplot(statistic, aes(x=factor(id), y=unname(unlist(statistic[,2])), color=factor(id), group=factor(id), label1=player)) + 
+      geom_boxplot(fill = "white", colour = "#3366FF") + 
+      geom_jitter(width = 0.15, size = 0.75) + 
+      xlab("Player ID") + 
+      ylab(stats_text[index])+
+      labs(color="Player")
+    
+    ggplotly(p, tooltip = c("label1", "label2", "y"))
+  })
+   
+})
+
+
+```
+
