@@ -1,6 +1,7 @@
 library(tidyverse)
 library(rvest)
 library(dplyr)
+library(RCurl)
 
 data_dir <- "data/"
 
@@ -80,7 +81,7 @@ plyr::mapvalues(from=c("Ala.", "Ariz.","Ark.", "Calif.", "Colo.","Conn.","Del.",
                          ",_Kentucky", ",_Louisiana", ",_Maryland",",_Massachusetts", ",_Michigan",",_Minnesota", 
                          ",_Mississippi",",_Missouri",",_Nevada",",_New_Jersey",",_New_Mexico",",_New_York",",_North_Carolina",
                          ",_Oklahoma", ",_Pennsylvania",",_Rhode Island", ",_South_Carolina", ",_Tennessee", ",_Vermont",
-                         ",_Virgina", ",_Texas", ",_Ohio", ",_Utah", ",_D.C.", ",_Alaska", ",_Oregon",",_Illinois"),
+                         ",_Virginia", ",_Texas", ",_Ohio", ",_Utah", ",_D.C.", ",_Alaska", ",_Oregon",",_Illinois"),
                     warn_missing = FALSE)}
 else {player_names$state[i] = ""}
 player_names$city[i] = substr(player_names$Hometown[i],1,start_index-2)
@@ -88,11 +89,40 @@ player_names$city[i] = substr(player_names$Hometown[i],1,start_index-2)
 #Manually changing this cuz idk what's wrong
 player_names$state[236] = ",_Illinois"
 
+for (i in 1:nrow(player_names)){
+  wiki_url = "https://en.wikipedia.org/wiki/"
+  full_wiki = paste0(wiki_url, as.character(player_names$city[i]), as.character(player_names$state[i]))
+  if (RCurl::url.exists(full_wiki)){
+    wiki_page = read_html(full_wiki)
+    if (identical(wiki_page %>% html_nodes("#coordinates .latitude") %>% html_text(), character(0))==FALSE
+        |identical(wiki_page %>% html_nodes("#coordinates .longitude") %>% html_text(), character(0))==FALSE){
+      player_names$lati[i] = wiki_page %>% html_nodes("#coordinates .latitude") %>% html_text()
+      player_names$long[i] = wiki_page %>% html_nodes("#coordinates .longitude") %>% html_text()}}
+  else {player_names$lati[i] = "N/A"
+        player_names$long[i] = "N/A"}
+}
+player_names$lati = gsub('°', ' ', player_names$lati)
+player_names$lati = gsub('′', ' ', player_names$lati)
+player_names$lati = gsub('″', ' ', player_names$lati)
+player_names$lati = gsub(' N', '', player_names$lati)
+player_names$lati = gsub(' S', '', player_names$lati)
 
+player_names$long = gsub('°', ' ', player_names$long)
+player_names$long = gsub('′', ' ', player_names$long)
+player_names$long = gsub('″', ' ', player_names$long)
+player_names$long = gsub(' W', ' ', player_names$long)
+player_names$long = gsub(' E', '', player_names$long)
 
+for (i in 1:nrow(player_names)){
+  if (player_names$lati[i] != "N/A"|player_names$long[i] != "N/A"){
+    player_names$lat[i] = measurements::conv_unit(player_names$lati[i], from = 'deg_min_sec', to = 'dec_deg')
+    player_names$lon[i] = measurements::conv_unit(player_names$long[i], from = 'deg_min_sec', to = 'dec_deg')
+  }
+  else {player_names$lat[i] = "N/A"
+        player_names$lon[i] = "N/A"}
+}
 
-
-
-
+player_names$lat = as.numeric(player_names$lat)
+player_names$lon = as.numeric(player_names$lon)
 
 write_rds(player_names, path = "data//player_names.rds")
