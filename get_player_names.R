@@ -46,7 +46,11 @@ get_player_names = function(season){
                       warn_missing = FALSE),
     Hometown = str_remove_all(Hometown, "\\t|\\n|Hometown:\\s"))
   
-  info$Name = str_remove_all(info$Name, "\\t|\\n") %>% substr(.,nchar(.)/2+1,nchar(.))
+  info$Name = str_remove_all(info$Name, "\\t|\\n")
+  for (i in 1:nrow(info)){
+    info$Name[i] = substr(info$Name[i],str_locate_all(info$Name, "[A-Z]+[a-z]+[A-Z]+[a-z]+")[[i]][1,2]-
+             ((str_locate_all(info$Name, "[A-Z]+[a-z]+[A-Z]+[a-z]+")[[i]][1,2] - 
+                 str_locate_all(info$Name, "[A-Z]+[a-z]+[A-Z]+[a-z]+")[[i]][1,1] + 1)/2)+1,1000)}
   return (info)
 }
 
