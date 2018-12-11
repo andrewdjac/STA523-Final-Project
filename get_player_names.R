@@ -48,9 +48,9 @@ get_player_names = function(season){
   
   info$Name = str_remove_all(info$Name, "\\t|\\n")
   for (i in 1:nrow(info)){
-    info$Name[i] = substr(info$Name[i],str_locate_all(info$Name, "[A-Z]+[a-z]+[A-Z]+[a-z]+")[[i]][1,2]-
-             ((str_locate_all(info$Name, "[A-Z]+[a-z]+[A-Z]+[a-z]+")[[i]][1,2] - 
-                 str_locate_all(info$Name, "[A-Z]+[a-z]+[A-Z]+[a-z]+")[[i]][1,1] + 1)/2)+1,1000)}
+    info$Name[i] = substr(info$Name[i],str_locate_all(info$Name, "\\s[A-Z]*[a-z]*[A-Z]*[a-z]*")[[i]][1,2]-
+             ((str_locate_all(info$Name, "\\s[A-Z]*[a-z]*[A-Z]*[a-z]*")[[i]][1,2] -
+                 str_locate_all(info$Name, "\\s[A-Z]*[a-z]*[A-Z]*[a-z]*")[[i]][1,1])/2)+1,1000)}
   return (info)
 }
 
@@ -61,5 +61,38 @@ for (season in seasons){
   df = get_player_names(season)
   player_names = rbind(player_names, df)
 }
+
+for (i in 1:nrow(player_names)){
+start_index = str_locate(player_names$Hometown[i], ",\\s")[1,2]
+end_index = str_locate(player_names$Hometown[i], "\\(")[1,1]
+player_names$state[i] = substr(player_names$Hometown[i],start_index+1,end_index-2)
+if (player_names$state[i] %in% c("Ala.", "Ariz.","Ark.", "Calif.", "Colo.","Conn.","Del.","Fla.","Ga.","Ill.", "Ind.",
+                 "Kan.", "Ky.","La.","Md.","Mass.","Mich.","Minn.","Miss.", "Mo.","Nev.", "N.J.",
+                 "N.M.","N.Y.","N.C.", "Okla.", "Pa.","R.I.", "S.C.","Tenn.", "Vt.","Va.","Texas", "Ohio", "Utah", "D.C.",
+                 "Alaska", "Ore.","Ill.\\s")){
+player_names$state[i] = player_names$state[i] %>% 
+plyr::mapvalues(from=c("Ala.", "Ariz.","Ark.", "Calif.", "Colo.","Conn.","Del.","Fla.","Ga.","Ill.", "Ind.",
+                           "Kan.", "Ky.","La.","Md.","Mass.","Mich.","Minn.","Miss.", "Mo.","Nev.", "N.J.",
+                           "N.M.","N.Y.","N.C.", "Okla.", "Pa.","R.I.", "S.C.","Tenn.", "Vt.","Va.", "Texas", "Ohio", 
+                           "Utah", "D.C.", "Alaska", "Ore.","Ill.\\s"), 
+                    to=c(",_Alabama", ",_Arizona",",_Arkansas", ",_California", ",_Colorado", 
+                         ",_Connecticut",",_Delaware", ",_Florida", ",_Georgia",",_Illinois", ",_Indiana",",_Kansas",
+                         ",_Kentucky", ",_Louisiana", ",_Maryland",",_Massachusetts", ",_Michigan",",_Minnesota", 
+                         ",_Mississippi",",_Missouri",",_Nevada",",_New_Jersey",",_New_Mexico",",_New_York",",_North_Carolina",
+                         ",_Oklahoma", ",_Pennsylvania",",_Rhode Island", ",_South_Carolina", ",_Tennessee", ",_Vermont",
+                         ",_Virgina", ",_Texas", ",_Ohio", ",_Utah", ",_D.C.", ",_Alaska", ",_Oregon",",_Illinois"),
+                    warn_missing = FALSE)}
+else {player_names$state[i] = ""}
+player_names$city[i] = substr(player_names$Hometown[i],1,start_index-2)
+}
+#Manually changing this cuz idk what's wrong
+player_names$state[236] = ",_Illinois"
+
+
+
+
+
+
+
 
 write_rds(player_names, path = "data//player_names.rds")
