@@ -23,10 +23,7 @@ get_player_names = function(season){
   year = page %>% html_nodes(".year") %>% html_text() %>% .[1:index]
   home = page %>% html_nodes(".hometown") %>% html_text() %>% .[1:index]
   seas = paste0(as.character(season),"-",as.character(season+1))
-  img_url  = page %>% html_nodes("#roster-list-table a") %>% html_attr("href") %>% 
-    paste0("http://goduke.com", .)
-  img      = img_url %>% 
-    map(function(x){read_html(x) %>% html_nodes("#bio-player-img") %>% html_attr("src")}) %>% unlist()
+  
   info = data.frame(
     Season = seas,
     Number = number,
@@ -35,8 +32,7 @@ get_player_names = function(season){
     Height = height,
     Weight = weight,
     Year = year,
-    Hometown = home,
-    Picture  = img
+    Hometown = home
   )
   
   info = info %>% mutate(
@@ -59,7 +55,7 @@ get_player_names = function(season){
   return (info)
 }
 
-seasons = c(2005:2018)
+seasons = c(1989:2018)
 
 player_names = data.frame()
 for (season in seasons){
@@ -91,7 +87,7 @@ for (i in 1:nrow(player_names)){
   player_names$city[i] = substr(player_names$Hometown[i],1,start_index-2)
 }
 #Manually changing this cuz idk what's wrong
-#player_names$state[236] = ",_Illinois"
+player_names$state[236] = ",_Illinois"
 
 for (i in 1:nrow(player_names)){
   wiki_url = "https://en.wikipedia.org/wiki/"
@@ -128,13 +124,5 @@ for (i in 1:nrow(player_names)){
 
 player_names$lat = as.numeric(player_names$lat)
 player_names$lon = as.numeric(player_names$lon)
-
-player_names <- player_names %>% 
-  mutate(player = Name %>% str_replace(., "[^A-Z]+", ". ")) %>% 
-  rename(season = Season)
-
-player_names[player_names$player == "J. J. Redick", "player"] <- "J. Redick"
-
-player_names$player = str_replace_all(player_names$player, ",", "")
 
 write_rds(player_names, path = "data//player_names.rds")
