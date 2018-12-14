@@ -23,5 +23,5 @@ players_data <- merge(players_data, player_names,
   clean_names() %>% 
   gather(category, quantity, points, assists, blocks, steals, rebounds, fouls)
 
-  
+
 write_rds(players_data, path = "players_data.rds")
