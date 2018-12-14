@@ -1,6 +1,6 @@
 ---
 title: "STA 523 Final Project"
-author: "Andy Cooper"
+author: "Andy Cooper, Jingyi Zhang, Mingjie Zhao, Ziwei Zhu"
 date: "11/28/2018"
 output: html_document
 runtime: shiny
@@ -12,6 +12,7 @@ library(shiny)
 library(shinydashboard)
 library(janitor)
 library(tools)
+library(shinythemes)
 ```
 
 
@@ -55,6 +56,7 @@ Shiny App
 ```{r echo = F}
 #UI
 ui <- fluidPage(
+    theme = shinytheme("cyborg"),
   titlePanel("Duke Men's Basketball Application"),
   sidebarLayout(
     sidebarPanel = sidebarPanel(
@@ -69,6 +71,12 @@ ui <- fluidPage(
                   selected = 1)
     ),
     mainPanel = mainPanel(
+      HTML(paste('<img align="middle"
+src=https://media.giphy.com/media/lhH0xqNPpenUk/giphy.gif width = 40% height = 100%>')),
+
+HTML(paste('<img align="middle"
+src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% height = 100%>')),
+
       fluidRow(
         column(3, uiOutput("player_image")),
         column(8, uiOutput("player_summary"))
