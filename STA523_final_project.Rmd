@@ -20,6 +20,7 @@ library(leaflet)
 ```{r echo = F}
 #Load data
 players_data <- readRDS("players_data.rds")
+players_names <- readRDS("data/player_names.rds")
 ```
 
 
@@ -107,7 +108,7 @@ column(7, h4("Geo-Location"),
 server <- function(input, output, session){
   #Getgeo
       GetGeo <- reactive(
-      us_locs %>% filter(city == input$City) %>% select(latitude, longitude)
+      players_names %>% filter(Name == input$select_player) %>% select(lat, lon)
     )
   
   #Reactive Values
@@ -155,9 +156,9 @@ server <- function(input, output, session){
    output$leaf = renderLeaflet({
       with(GetGeo(),
           leaflet(data = GetGeo()) %>%
-            setView(lng = longitude, lat = latitude, zoom = 10) %>%
+            setView(lng = lon, lat = lat, zoom = 10) %>%
             addTiles() %>%
-            addMarkers(~longitude, ~latitude, popup = input$City)
+            addMarkers(~lon, ~lat, popup = input$select_player)
            )
     })
   
