@@ -82,12 +82,13 @@ src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% heigh
                     toTitleCase(),
                   selected = 1)
     ),
-
-      fluidRow(
-        column(7, h4("Geo-Location"), 
+column(7, h4("Geo-Location"), 
                         leafletOutput("leaf", width = "100%", height = 240),
                         tableOutput("geo")
                         ),
+
+      fluidRow(
+        
         column(3, uiOutput("player_image")),
         column(8, uiOutput("player_summary"))
       ),
