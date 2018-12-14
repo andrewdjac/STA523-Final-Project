@@ -81,7 +81,6 @@ src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% heigh
                     toTitleCase(),
                   selected = 1)
     ),
-    
 
       fluidRow(
         column(3, uiOutput("player_image")),
