@@ -59,7 +59,7 @@ Shiny App
 ```{r echo = F}
 #UI
 ui <- fluidPage(
-    theme = shinytheme("cyborg"),
+  theme = shinytheme('flatly'),
   titlePanel("Duke Men's Basketball Application"),
   sidebarLayout(
     sidebarPanel = sidebarPanel(
