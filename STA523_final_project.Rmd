@@ -39,12 +39,16 @@ plot_season <- function(p, s, c){
     filter(name == p, season == s, category == c) %>% 
     ggplot(aes(x = date, y = quantity, color = factor(win))) + 
     geom_point(size = 4) + 
-    geom_line(color = "black") + 
+    geom_line(color = "black",
+                  linejoin = "round",
+                  lineend = "round") + 
     geom_hline(yintercept = 
                  mean(players_data %>% filter(name == p, category == c) %>%
                        .$quantity), col = "#4169e1") +
-    labs(x = "Date", y = c %>% toTitleCase()) +
+    labs(x = "Date", y = c %>% toTitleCase(),size=4) +
     theme(legend.position = "none") +
+    theme_grey(base_size = 15)+
+   theme(legend.title=element_blank())
     scale_color_manual(values = c("red", "black"))
   return(g)
 }
