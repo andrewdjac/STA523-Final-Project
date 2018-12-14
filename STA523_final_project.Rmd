@@ -81,21 +81,20 @@ src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% heigh
       selectInput(inputId = "select_category", label = h4("Select Statistic"),
                   choices = players_data$category %>% unique() %>%
                     toTitleCase(),
-                  selected = 1)
-    ),
-column(7, h4("Geo-Location"), 
-                        leafletOutput("leaf", width = "100%", height = 240),
-                        tableOutput("geo")
-                        ),
-
-      fluidRow(
-        
+                  selected = 1),
+            fluidRow(
         column(3, uiOutput("player_image")),
         column(8, uiOutput("player_summary"))
       ),
       fluidRow(
         plotOutput("player_performance", click = "click_game")
-      )
+      ),
+      column(12, h4("Geo-Location"), 
+                        leafletOutput("leaf", width = "100%", height = 100),
+                        tableOutput("geo")
+                        )
+    )
+
     )
   )
 )
@@ -162,17 +161,13 @@ server <- function(input, output, session){
            )
     })
   
-  
   #Create line graph
   output$player_performance <- renderPlot({
     plot_season(input$select_player, 
                 input$select_season, input$select_category %>% tolower())
   })
   
-  
-  
-  
-  
+
   observeEvent(input$click_game, {
     game_data <- nearPoints(players_data, input$click_game, 
                             threshold = 10, maxpoints = 1,
