@@ -13,14 +13,12 @@ library(shinydashboard)
 library(janitor)
 library(tools)
 library(shinythemes)
-library(leaflet)
 ```
 
 
 ```{r echo = F}
 #Load data
 players_data <- readRDS("players_data.rds")
-players_names <- readRDS("data/player_names.rds")
 ```
 
 
@@ -41,16 +39,13 @@ plot_season <- function(p, s, c){
     filter(name == p, season == s, category == c) %>% 
     ggplot(aes(x = date, y = quantity, color = factor(win))) + 
     geom_point(size = 4) + 
-    geom_line(color = "black",
-                  linejoin = "round",
-                  lineend = "round") + 
+    geom_line(color = "black") + 
     geom_hline(yintercept = 
                  mean(players_data %>% filter(name == p, category == c) %>%
                        .$quantity), col = "#4169e1") +
-    labs(x = "Date", y = c %>% toTitleCase(),size=4) +
+    labs(x = "Date", y = c %>% toTitleCase()) +
     theme(legend.position = "none") +
-    theme_grey(base_size = 15)+
-   theme(legend.title=element_blank())
+    scale_color_manual(values = c("red", "black"))
   return(g)
 }
 ```
@@ -61,18 +56,10 @@ Shiny App
 ```{r echo = F}
 #UI
 ui <- fluidPage(
-  theme = shinytheme('flatly'),
-navbarPage(
-      title = "Duke Men's Basketball ",
-      id = 'nav',
-      tabPanel('Application', value = 'Application ',
-                 fluidRow(
-      HTML(paste('<img align="middle"
-src=https://media.giphy.com/media/lhH0xqNPpenUk/giphy.gif width = 40% height = 100%>')),
-
-HTML(paste('<img align="middle"
-src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% height = 100%>'))),
-               fluidRow(
+    theme = shinytheme("cyborg"),
+  titlePanel("Duke Men's Basketball Application"),
+  sidebarLayout(
+    sidebarPanel = sidebarPanel(
       selectInput(inputId = "select_season", label = h4("Select Season"), 
                   choices = players_data$season %>% 
                     unique() %>% sort() %>% rev()),
@@ -81,35 +68,31 @@ src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% heigh
       selectInput(inputId = "select_category", label = h4("Select Statistic"),
                   choices = players_data$category %>% unique() %>%
                     toTitleCase(),
-                  selected = 1),
-            fluidRow(
+                  selected = 1)
+    ),
+    mainPanel = mainPanel(
+      HTML(paste('<img align="middle"
+src=https://media.giphy.com/media/lhH0xqNPpenUk/giphy.gif width = 40% height = 100%>')),
+
+HTML(paste('<img align="middle"
+src=https://media.giphy.com/media/AFXYakZdPOEkxVqNyU/giphy.gif width = 40% height = 100%>')),
+
+      fluidRow(
         column(3, uiOutput("player_image")),
         column(8, uiOutput("player_summary"))
       ),
       fluidRow(
         plotOutput("player_performance", click = "click_game")
-      ),
-      column(12, h4("Geo-Location"), 
-                        leafletOutput("leaf", width = "100%", height = 100),
-                        tableOutput("geo")
-                        )
-    )
-
+      )
     )
   )
 )
-
 ```
 
 
 ```{r echo = F}
 #SERVER
 server <- function(input, output, session){
-  #Getgeo
-      GetGeo <- reactive(
-      players_names %>% filter(Name == input$select_player) %>% select(lat, lon)
-    )
-  
   #Reactive Values
   state <- reactiveValues(
     player_info = list()
@@ -150,24 +133,12 @@ server <- function(input, output, session){
     tags$img(src = state$player_info$picture[1], height = "150px")
   })
   
-  #leaflet
-  
-   output$leaf = renderLeaflet({
-      with(GetGeo(),
-          leaflet(data = GetGeo()) %>%
-            setView(lng = lon, lat = lat, zoom = 10) %>%
-            addTiles() %>%
-            addMarkers(~lon, ~lat, popup = input$select_player)
-           )
-    })
-  
   #Create line graph
   output$player_performance <- renderPlot({
     plot_season(input$select_player, 
                 input$select_season, input$select_category %>% tolower())
   })
   
-
   observeEvent(input$click_game, {
     game_data <- nearPoints(players_data, input$click_game, 
                             threshold = 10, maxpoints = 1,
