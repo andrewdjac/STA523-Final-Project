@@ -23,6 +23,7 @@ get_player_names = function(season){
   year = page %>% html_nodes(".year") %>% html_text() %>% .[1:index]
   home = page %>% html_nodes(".hometown") %>% html_text() %>% .[1:index]
   seas = paste0(as.character(season),"-",as.character(season+1))
+
   
   info = data.frame(
     Season = seas,
@@ -47,6 +48,7 @@ get_player_names = function(season){
                       warn_missing = FALSE),
     Hometown = str_remove_all(Hometown, "\\t|\\n|Hometown:\\s"))
   
+
   info$Name = str_remove_all(info$Name, "\\t|\\n")
   for (i in 1:nrow(info)){
     info$Name[i] = substr(info$Name[i],str_locate_all(info$Name, "\\s[A-Z]*[a-z]*[A-Z]*[a-z]*")[[i]][1,2]-
@@ -55,6 +57,7 @@ get_player_names = function(season){
   return (info)
 }
 
+
 seasons = c(1989:2018)
 
 player_names = data.frame()
@@ -62,6 +65,7 @@ for (season in seasons){
   df = get_player_names(season)
   player_names = rbind(player_names, df)
 }
+
 
 for (i in 1:nrow(player_names)){
   start_index = str_locate(player_names$Hometown[i], ",\\s")[1,2]
@@ -125,4 +129,6 @@ for (i in 1:nrow(player_names)){
 player_names$lat = as.numeric(player_names$lat)
 player_names$lon = as.numeric(player_names$lon)
 
+
 write_rds(player_names, path = "data//player_names.rds")
+
